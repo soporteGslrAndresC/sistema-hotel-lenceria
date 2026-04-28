@@ -40,6 +40,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'role:empleado'])->prefix('empleado')->name('empleado.')->group(function () {
     Route::get('/', EmpleadoDashboardController::class)->name('dashboard');
     Route::get('/asignacion/{asignacion}', [EmpleadoHabitacionController::class, 'show'])->name('asignacion.show');
+    Route::get('/scanner', [EscaneoController::class, 'scanner'])->name('scanner');
+    Route::post('/escanear-global', [EscaneoController::class, 'escanearGlobal'])->name('escanear.global');
     Route::post('/asignacion/{asignacion}/escanear', [EscaneoController::class, 'escanear'])->name('asignacion.escanear');
     Route::post('/asignacion/{asignacion}/completar', [EmpleadoHabitacionController::class, 'completar'])->name('asignacion.completar');
 });

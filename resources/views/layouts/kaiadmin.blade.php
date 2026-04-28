@@ -192,6 +192,12 @@
                                 <p>Mis habitaciones</p>
                             </a>
                         </li>
+                        <li class="nav-item {{ request()->routeIs('empleado.scanner') ? 'active' : '' }}">
+                            <a href="{{ route('empleado.scanner') }}">
+                                <i class="fas fa-qrcode"></i>
+                                <p>Escanear QR</p>
+                            </a>
+                        </li>
                     @endif
                 @endauth
 

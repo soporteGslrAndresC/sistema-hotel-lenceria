@@ -11,14 +11,19 @@
 @section('content')
 <div class="row">
     <div class="col-12 mb-3">
-        <div class="d-flex align-items-center justify-content-between">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
             <div>
                 <h5 class="mb-0">
                     <i class="fas fa-user-clock me-2 text-primary"></i>
                     Turno: <span class="badge bg-primary">{{ auth()->user()->turno ?? '—' }}</span>
                 </h5>
             </div>
-            <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>{{ now()->isoFormat('dddd D [de] MMMM, YYYY') }}</small>
+            <div class="d-flex align-items-center gap-2">
+                <a href="{{ route('empleado.scanner') }}" class="btn btn-primary btn-round">
+                    <i class="fas fa-qrcode me-2"></i>Escanear QR
+                </a>
+                <small class="text-muted d-none d-md-inline"><i class="far fa-calendar-alt me-1"></i>{{ now()->isoFormat('dddd D [de] MMMM, YYYY') }}</small>
+            </div>
         </div>
     </div>
 

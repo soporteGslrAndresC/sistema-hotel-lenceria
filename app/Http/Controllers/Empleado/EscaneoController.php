@@ -13,6 +13,118 @@ use Illuminate\Http\Request;
 
 class EscaneoController extends Controller
 {
+    public function scanner()
+    {
+        return view('empleado.scanner');
+    }
+
+    /**
+     * Escaneo global: identifica automáticamente la habitación por el QR.
+     * No requiere asignacion_id — busca la asignación del empleado para hoy.
+     */
+    public function escanearGlobal(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'codigo_qr' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+        $lenceria = Lenceria::where('codigo_qr', $data['codigo_qr'])->first();
+
+        if (!$lenceria) {
+            return response()->json([
+                'ok' => false,
+                'tipo' => 'no_encontrada',
+                'mensaje' => 'Código QR no reconocido.',
+            ], 404);
+        }
+
+        $habitacion = $lenceria->habitacion;
+
+        if (!$habitacion) {
+            return response()->json([
+                'ok' => false,
+                'tipo' => 'sin_habitacion',
+                'mensaje' => 'Esta prenda no tiene habitación asignada.',
+            ], 422);
+        }
+
+        if ($lenceria->estado === 'extraviada') {
+            try {
+                broadcast(new AlertaCreada(
+                    'extraviada',
+                    "Se escaneó prenda EXTRAVIADA {$lenceria->codigo_qr}",
+                    $habitacion->id
+                ));
+            } catch (\Throwable) {}
+            return response()->json([
+                'ok' => false,
+                'tipo' => 'extraviada',
+                'mensaje' => 'Esta prenda estaba marcada como extraviada. Reportada al admin.',
+                'habitacion' => $habitacion->codigo,
+            ], 422);
+        }
+
+        // Buscar asignación del empleado para esta habitación hoy
+        $asignacion = AsignacionDiaria::where('user_id', $user->id)
+            ->where('habitacion_id', $habitacion->id)
+            ->whereDate('fecha', today())
+            ->first();
+
+        if (!$asignacion) {
+            return response()->json([
+                'ok' => false,
+                'tipo' => 'sin_asignacion',
+                'mensaje' => "La prenda pertenece a {$habitacion->codigo}, pero no tienes asignación para esa habitación hoy.",
+                'habitacion' => $habitacion->codigo,
+            ], 422);
+        }
+
+        $item = $asignacion->checklist()
+            ->where('lenceria_id', $lenceria->id)
+            ->first();
+
+        if (!$item) {
+            return response()->json([
+                'ok' => false,
+                'tipo' => 'no_en_checklist',
+                'mensaje' => 'Esta prenda no está en el checklist de ' . $habitacion->codigo . '.',
+                'habitacion' => $habitacion->codigo,
+            ], 422);
+        }
+
+        if ($item->escaneado) {
+            $progreso = $asignacion->progreso();
+            return response()->json([
+                'ok' => true,
+                'tipo' => 'ya_escaneada',
+                'mensaje' => ucfirst($lenceria->tipo) . ' ya estaba escaneada en ' . $habitacion->codigo . '.',
+                'habitacion' => $habitacion->codigo,
+                'asignacion_id' => $asignacion->id,
+                'progreso' => $progreso,
+            ]);
+        }
+
+        $item->update(['escaneado' => true, 'escaneado_at' => now()]);
+
+        $progreso = $asignacion->fresh()->progreso();
+        $completada = $progreso['hechos'] >= $progreso['total'] && $progreso['total'] > 0;
+
+        try { broadcast(new ChecklistActualizado($asignacion->fresh()))->toOthers(); } catch (\Throwable) {}
+        try { broadcast(new HabitacionActualizada($habitacion->fresh()))->toOthers(); } catch (\Throwable) {}
+
+        return response()->json([
+            'ok' => true,
+            'tipo' => 'ok',
+            'mensaje' => ucfirst($lenceria->tipo) . ' escaneada ✓ — ' . $habitacion->codigo,
+            'habitacion' => $habitacion->codigo,
+            'habitacion_nombre' => $habitacion->nombre,
+            'asignacion_id' => $asignacion->id,
+            'progreso' => $progreso,
+            'completada' => $completada,
+        ]);
+    }
+
     public function escanear(Request $request, AsignacionDiaria $asignacion): JsonResponse
     {
         abort_unless($asignacion->user_id === $request->user()->id, 403);
