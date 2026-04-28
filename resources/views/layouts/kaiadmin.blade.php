@@ -310,16 +310,28 @@
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
 
-    // Botón 3 puntos: abre el dropdown de perfil directamente
+    // Botón 3 puntos: abre el dropdown de perfil (toggle manual de clases)
     function toggleProfileDropdown(ev){
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         var trigger = document.querySelector('.topbar-user .dropdown-toggle');
-        if (!trigger || !window.bootstrap) return;
-        var dd = bootstrap.Dropdown.getOrCreateInstance(trigger);
-        dd.toggle();
+        var menu    = document.querySelector('.topbar-user .dropdown-menu');
+        if (!trigger || !menu) return;
+        var willOpen = !menu.classList.contains('show');
+        menu.classList.toggle('show', willOpen);
+        trigger.classList.toggle('show', willOpen);
+        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
     }
     document.querySelectorAll('.topbar-toggler').forEach(function(b){
         b.addEventListener('click', toggleProfileDropdown);
+    });
+    // Cerrar el dropdown al tocar fuera
+    document.addEventListener('click', function(e){
+        var menu = document.querySelector('.topbar-user .dropdown-menu.show');
+        if (!menu) return;
+        if (e.target.closest('.topbar-user') || e.target.closest('.topbar-toggler')) return;
+        menu.classList.remove('show');
+        var trigger = document.querySelector('.topbar-user .dropdown-toggle');
+        if (trigger) { trigger.classList.remove('show'); trigger.setAttribute('aria-expanded', 'false'); }
     });
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
