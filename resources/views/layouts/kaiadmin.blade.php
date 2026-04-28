@@ -19,6 +19,40 @@
     <link rel="stylesheet" href="{{ asset('assets/css/kaiadmin.min.css') }}" />
 
     @stack('styles')
+    <style>
+        /* ── Mobile sidebar overlay ── */
+        #sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.5);
+            z-index: 1040;
+        }
+        body.sidebar-mobile-open #sidebar-overlay { display: block; }
+        @media (max-width: 991.98px) {
+            body.sidebar-mobile-open .sidebar {
+                transform: translateX(0) !important;
+                left: 0 !important;
+                z-index: 1045;
+            }
+            .btn-mobile-sidebar {
+                display: inline-flex !important;
+                align-items: center;
+                justify-content: center;
+                width: 36px;
+                height: 36px;
+                background: transparent;
+                border: none;
+                color: #fff;
+                font-size: 1.3rem;
+                cursor: pointer;
+                padding: 0;
+            }
+        }
+        @media (min-width: 992px) {
+            .btn-mobile-sidebar { display: none !important; }
+        }
+    </style>
 </head>
 <body>
 <div class="wrapper">
@@ -124,7 +158,10 @@
 
             <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
                 <div class="container-fluid">
-                    <div class="d-flex align-items-center">
+                    <div class="d-flex align-items-center gap-2">
+                        <button class="btn-mobile-sidebar" id="btn-open-sidebar" aria-label="Menú">
+                            <i class="fas fa-bars"></i>
+                        </button>
                         <h5 class="mb-0 text-muted d-none d-md-block">@yield('page-title', config('app.name'))</h5>
                     </div>
                     <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
@@ -227,6 +264,9 @@
             </div>
         </footer>
     </div>
+{{-- Mobile sidebar overlay --}}
+<div id="sidebar-overlay"></div>
+
 </div>
 
 {{-- Core JS --}}
@@ -238,5 +278,19 @@
 <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
 @stack('scripts')
+<script>
+(function(){
+    var btn     = document.getElementById('btn-open-sidebar');
+    var overlay = document.getElementById('sidebar-overlay');
+    function openSidebar()  { document.body.classList.add('sidebar-mobile-open'); }
+    function closeSidebar() { document.body.classList.remove('sidebar-mobile-open'); }
+    if (btn)     btn.addEventListener('click', openSidebar);
+    if (overlay) overlay.addEventListener('click', closeSidebar);
+    // close on nav-item click (useful for mobile)
+    document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
+        a.addEventListener('click', closeSidebar);
+    });
+})();
+</script>
 </body>
 </html>
