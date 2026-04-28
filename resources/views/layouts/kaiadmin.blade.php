@@ -44,16 +44,39 @@
         }
         @media (max-width: 991.98px) {
             .btn-mobile-sidebar { display: inline-flex !important; }
-            /* Posicionar el dropdown del perfil cerca del botón 3-puntos en móvil */
-            .topbar-user .dropdown-menu {
-                position: fixed !important;
-                top: 60px !important;
-                right: 10px !important;
-                left: auto !important;
-                transform: none !important;
-                min-width: 240px;
-                z-index: 1060;
-            }
+        }
+        /* Menú custom de perfil móvil */
+        #mobile-profile-menu {
+            display: none;
+            position: fixed;
+            top: 60px;
+            right: 10px;
+            min-width: 250px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,.18);
+            padding: 0;
+            z-index: 1060;
+            overflow: hidden;
+        }
+        #mobile-profile-menu .mpm-header {
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        #mobile-profile-menu .mpm-item {
+            display: block;
+            padding: 12px 16px;
+            color: #333;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid #eee;
+            font-size: .95rem;
+        }
+        #mobile-profile-menu .mpm-item:last-child { border-bottom: none; }
+        #mobile-profile-menu .mpm-item:hover { background: #f5f5f5; }
+        @media (min-width: 992px) {
+            #mobile-profile-menu { display: none !important; }
         }
     </style>
 </head>
@@ -155,7 +178,30 @@
                         <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
                         <button class="btn btn-toggle sidenav-toggler"><i class="gg-menu-left"></i></button>
                     </div>
-                    <button class="topbar-toggler more"><i class="gg-more-vertical-alt"></i></button>
+                    <button class="topbar-toggler more" type="button"
+                            onclick="event.preventDefault();event.stopPropagation();var m=document.getElementById('mobile-profile-menu');if(m){m.style.display=(m.style.display==='block')?'none':'block';}return false;">
+                        <i class="gg-more-vertical-alt"></i>
+                    </button>
+                    @auth
+                    <div id="mobile-profile-menu" onclick="event.stopPropagation();">
+                        <div class="mpm-header">
+                            <h6 class="mb-1 fw-bold">{{ auth()->user()->name }}</h6>
+                            <p class="text-muted small mb-2">{{ auth()->user()->email }}</p>
+                            @if(auth()->user()->turno)
+                                <span class="badge bg-info">Turno {{ auth()->user()->turno }}</span>
+                            @endif
+                        </div>
+                        <a href="{{ route('profile.edit') }}" class="mpm-item">
+                            <i class="fas fa-user me-2"></i>Mi perfil
+                        </a>
+                        <form method="POST" action="{{ route('logout') }}" class="mb-0">
+                            @csrf
+                            <button type="submit" class="mpm-item text-danger w-100 text-start">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+                            </button>
+                        </form>
+                    </div>
+                    @endauth
                 </div>
             </div>
 
@@ -310,28 +356,13 @@
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
 
-    // Botón 3 puntos: abre el dropdown de perfil (toggle manual de clases)
-    function toggleProfileDropdown(ev){
-        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        var trigger = document.querySelector('.topbar-user .dropdown-toggle');
-        var menu    = document.querySelector('.topbar-user .dropdown-menu');
-        if (!trigger || !menu) return;
-        var willOpen = !menu.classList.contains('show');
-        menu.classList.toggle('show', willOpen);
-        trigger.classList.toggle('show', willOpen);
-        trigger.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-    }
-    document.querySelectorAll('.topbar-toggler').forEach(function(b){
-        b.addEventListener('click', toggleProfileDropdown);
-    });
-    // Cerrar el dropdown al tocar fuera
+    // Cerrar menú de perfil móvil al tocar fuera
     document.addEventListener('click', function(e){
-        var menu = document.querySelector('.topbar-user .dropdown-menu.show');
-        if (!menu) return;
-        if (e.target.closest('.topbar-user') || e.target.closest('.topbar-toggler')) return;
-        menu.classList.remove('show');
-        var trigger = document.querySelector('.topbar-user .dropdown-toggle');
-        if (trigger) { trigger.classList.remove('show'); trigger.setAttribute('aria-expanded', 'false'); }
+        var menu = document.getElementById('mobile-profile-menu');
+        if (!menu || menu.style.display !== 'block') return;
+        if (e.target.closest('.topbar-toggler')) return;
+        if (e.target.closest('#mobile-profile-menu')) return;
+        menu.style.display = 'none';
     });
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
