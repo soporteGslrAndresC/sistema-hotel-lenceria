@@ -44,6 +44,12 @@
         }
         @media (max-width: 991.98px) {
             .btn-mobile-sidebar { display: inline-flex !important; }
+            /* Topbar (3-dot) reveal en móvil */
+            html.topbar_open .navbar-header { display: block !important; background:#fff; }
+            html.topbar_open .navbar-header .container-fluid { flex-wrap: wrap; padding: 10px 15px; }
+            html.topbar_open .topbar-nav { display: flex !important; width: 100%; justify-content: flex-end; }
+            html:not(.topbar_open) .navbar-header .topbar-nav { display: none; }
+            .navbar-header { transition: all .25s ease; }
         }
     </style>
 </head>
@@ -299,6 +305,16 @@
     // Hookear a TODOS los botones hamburguesa de Kaiadmin
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
+
+    // Botón 3 puntos (.topbar-toggler) en móvil
+    function toggleTopbar(ev){
+        if (window.innerWidth >= 992) return;
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
+        document.documentElement.classList.toggle('topbar_open');
+    }
+    document.querySelectorAll('.topbar-toggler').forEach(function(b){
+        b.addEventListener('click', toggleTopbar);
+    });
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
     document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
