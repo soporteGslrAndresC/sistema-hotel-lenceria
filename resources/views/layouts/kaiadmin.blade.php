@@ -55,38 +55,69 @@
             margin-top: 0 !important;
         }
         html.topbar_open { overflow: auto !important; }
-        /* Menú custom de perfil móvil */
+        /* Menú custom de perfil móvil — panel deslizable desde la derecha */
         #mobile-profile-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 280px;
+            max-width: 85vw;
+            height: 100vh;
+            background: #fff;
+            box-shadow: -8px 0 24px rgba(0,0,0,.18);
+            z-index: 1060;
+            transform: translateX(100%);
+            transition: transform .3s ease;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+        #mobile-profile-menu.mpm-open { transform: translateX(0); }
+        #mobile-profile-backdrop {
             display: none;
             position: fixed;
-            top: 60px;
-            right: 10px;
-            min-width: 250px;
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0,0,0,.18);
-            padding: 0;
-            z-index: 1060;
-            overflow: hidden;
+            inset: 0;
+            background: rgba(0,0,0,.4);
+            z-index: 1055;
         }
+        #mobile-profile-backdrop.mpm-open { display: block; }
         #mobile-profile-menu .mpm-header {
-            padding: 16px;
+            padding: 20px 16px;
             border-bottom: 1px solid #eee;
+            background: #1a2035;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        #mobile-profile-menu .mpm-header .mpm-info { flex: 1; min-width: 0; }
+        #mobile-profile-menu .mpm-header h6 { color: #fff; }
+        #mobile-profile-menu .mpm-header p { color: rgba(255,255,255,.7); }
+        #mobile-profile-menu .mpm-close {
+            background: rgba(255,255,255,.1);
+            border: none;
+            color: #fff;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
         }
         #mobile-profile-menu .mpm-item {
             display: block;
-            padding: 12px 16px;
+            padding: 14px 16px;
             color: #333;
             text-decoration: none;
             background: transparent;
             border: none;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid #f0f0f0;
             font-size: .95rem;
+            text-align: left;
         }
-        #mobile-profile-menu .mpm-item:last-child { border-bottom: none; }
         #mobile-profile-menu .mpm-item:hover { background: #f5f5f5; }
         @media (min-width: 992px) {
-            #mobile-profile-menu { display: none !important; }
+            #mobile-profile-menu, #mobile-profile-backdrop { display: none !important; }
         }
     </style>
 </head>
@@ -177,6 +208,34 @@
     </div>
     {{-- ============================================================ End Sidebar --}}
 
+    @auth
+    {{-- Mobile profile drawer --}}
+    <div id="mobile-profile-backdrop" onclick="window.toggleMobileProfile&&window.toggleMobileProfile();"></div>
+    <div id="mobile-profile-menu">
+        <div class="mpm-header">
+            <div class="mpm-info">
+                <h6 class="mb-1 fw-bold text-truncate">{{ auth()->user()->name }}</h6>
+                <p class="small mb-2 text-truncate">{{ auth()->user()->email }}</p>
+                @if(auth()->user()->turno)
+                    <span class="badge bg-info">Turno {{ auth()->user()->turno }}</span>
+                @endif
+            </div>
+            <button type="button" class="mpm-close" onclick="window.toggleMobileProfile&&window.toggleMobileProfile();" aria-label="Cerrar">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <a href="{{ route('profile.edit') }}" class="mpm-item">
+            <i class="fas fa-user me-2"></i>Mi perfil
+        </a>
+        <form method="POST" action="{{ route('logout') }}" class="mb-0">
+            @csrf
+            <button type="submit" class="mpm-item text-danger" style="width:100%;">
+                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
+            </button>
+        </form>
+    </div>
+    @endauth
+
     <div class="main-panel">
 
         {{-- ============================================================ Topbar --}}
@@ -189,29 +248,9 @@
                         <button class="btn btn-toggle sidenav-toggler"><i class="gg-menu-left"></i></button>
                     </div>
                     <button class="topbar-toggler more" type="button"
-                            onclick="event.preventDefault();event.stopPropagation();var m=document.getElementById('mobile-profile-menu');if(m){m.style.display=(m.style.display==='block')?'none':'block';}return false;">
+                            onclick="event.preventDefault();event.stopImmediatePropagation();window.toggleMobileProfile&&window.toggleMobileProfile();return false;">
                         <i class="gg-more-vertical-alt"></i>
                     </button>
-                    @auth
-                    <div id="mobile-profile-menu" onclick="event.stopPropagation();">
-                        <div class="mpm-header">
-                            <h6 class="mb-1 fw-bold">{{ auth()->user()->name }}</h6>
-                            <p class="text-muted small mb-2">{{ auth()->user()->email }}</p>
-                            @if(auth()->user()->turno)
-                                <span class="badge bg-info">Turno {{ auth()->user()->turno }}</span>
-                            @endif
-                        </div>
-                        <a href="{{ route('profile.edit') }}" class="mpm-item">
-                            <i class="fas fa-user me-2"></i>Mi perfil
-                        </a>
-                        <form method="POST" action="{{ route('logout') }}" class="mb-0">
-                            @csrf
-                            <button type="submit" class="mpm-item text-danger w-100 text-start">
-                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
-                            </button>
-                        </form>
-                    </div>
-                    @endauth
                 </div>
             </div>
 
@@ -367,14 +406,16 @@
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
 
-    // Cerrar menú de perfil móvil al tocar fuera
-    document.addEventListener('click', function(e){
+    // Toggle menú de perfil móvil (drawer derecho)
+    window.toggleMobileProfile = function() {
         var menu = document.getElementById('mobile-profile-menu');
-        if (!menu || menu.style.display !== 'block') return;
-        if (e.target.closest('.topbar-toggler')) return;
-        if (e.target.closest('#mobile-profile-menu')) return;
-        menu.style.display = 'none';
-    });
+        var bd   = document.getElementById('mobile-profile-backdrop');
+        if (!menu || !bd) return;
+        var willOpen = !menu.classList.contains('mpm-open');
+        menu.classList.toggle('mpm-open', willOpen);
+        bd.classList.toggle('mpm-open', willOpen);
+        document.body.style.overflow = willOpen ? 'hidden' : '';
+    };
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
     document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
