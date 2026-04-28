@@ -45,6 +45,16 @@
         @media (max-width: 991.98px) {
             .btn-mobile-sidebar { display: inline-flex !important; }
         }
+        /* Neutralizar el efecto topbar_open de Kaiadmin (el rectángulo blanco) */
+        html.topbar_open .navbar-header,
+        html.topbar_open .main-header,
+        html.topbar_open .main-panel,
+        html.topbar_open .main-panel > .container {
+            transform: none !important;
+            background: transparent !important;
+            margin-top: 0 !important;
+        }
+        html.topbar_open { overflow: auto !important; }
         /* Menú custom de perfil móvil */
         #mobile-profile-menu {
             display: none;
