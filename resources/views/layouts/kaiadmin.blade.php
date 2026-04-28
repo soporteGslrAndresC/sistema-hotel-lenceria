@@ -55,69 +55,62 @@
             margin-top: 0 !important;
         }
         html.topbar_open { overflow: auto !important; }
-        /* Menú custom de perfil móvil — panel deslizable desde la derecha */
-        #mobile-profile-menu {
+        /* Drawer derecho de perfil (mismo estilo que sidebar izquierdo) */
+        #right-drawer {
             position: fixed;
             top: 0;
             right: 0;
-            width: 280px;
+            width: 265px;
             max-width: 85vw;
             height: 100vh;
-            background: #fff;
-            box-shadow: -8px 0 24px rgba(0,0,0,.18);
-            z-index: 1060;
-            transform: translateX(100%);
-            transition: transform .3s ease;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-        }
-        #mobile-profile-menu.mpm-open { transform: translateX(0); }
-        #mobile-profile-backdrop {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,.4);
-            z-index: 1055;
-        }
-        #mobile-profile-backdrop.mpm-open { display: block; }
-        #mobile-profile-menu .mpm-header {
-            padding: 20px 16px;
-            border-bottom: 1px solid #eee;
             background: #1a2035;
             color: #fff;
+            z-index: 1060;
+            overflow-y: auto;
+            box-shadow: -4px 0 10px rgba(0,0,0,.2);
+        }
+        #right-drawer-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,.45);
+            z-index: 1055;
+        }
+        #right-drawer .rd-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid rgba(255,255,255,.1);
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
         }
-        #mobile-profile-menu .mpm-header .mpm-info { flex: 1; min-width: 0; }
-        #mobile-profile-menu .mpm-header h6 { color: #fff; }
-        #mobile-profile-menu .mpm-header p { color: rgba(255,255,255,.7); }
-        #mobile-profile-menu .mpm-close {
-            background: rgba(255,255,255,.1);
-            border: none;
-            color: #fff;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.1rem;
+        #right-drawer .rd-avatar {
+            width: 42px; height: 42px; border-radius: 50%;
+            background: #5a8dee; color: #fff; display: flex;
+            align-items: center; justify-content: center;
+            font-weight: 700; font-size: 1.1rem; flex-shrink: 0;
         }
-        #mobile-profile-menu .mpm-item {
-            display: block;
-            padding: 14px 16px;
-            color: #333;
-            text-decoration: none;
-            background: transparent;
-            border: none;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: .95rem;
-            text-align: left;
+        #right-drawer .rd-info { flex: 1; min-width: 0; padding-left: 12px; }
+        #right-drawer .rd-info h6 { color: #fff; margin: 0 0 2px; font-size: .95rem; }
+        #right-drawer .rd-info p { color: rgba(255,255,255,.55); margin: 0; font-size: .8rem; }
+        #right-drawer .rd-close {
+            background: rgba(255,255,255,.1); border: none; color: #fff;
+            width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+            font-size: .9rem; display: flex; align-items: center; justify-content: center;
         }
-        #mobile-profile-menu .mpm-item:hover { background: #f5f5f5; }
+        #right-drawer .rd-nav { list-style: none; padding: 10px 0; margin: 0; }
+        #right-drawer .rd-nav li a,
+        #right-drawer .rd-nav li button {
+            display: flex; align-items: center; gap: 10px;
+            padding: 12px 20px; color: rgba(255,255,255,.8);
+            text-decoration: none; background: transparent; border: none;
+            font-size: .9rem; width: 100%; text-align: left; cursor: pointer;
+            transition: background .15s;
+        }
+        #right-drawer .rd-nav li a:hover,
+        #right-drawer .rd-nav li button:hover { background: rgba(255,255,255,.08); color: #fff; }
+        #right-drawer .rd-nav li a i,
+        #right-drawer .rd-nav li button i { width: 20px; text-align: center; }
         @media (min-width: 992px) {
-            #mobile-profile-menu, #mobile-profile-backdrop { display: none !important; }
+            #right-drawer, #right-drawer-backdrop { display: none !important; }
         }
     </style>
 </head>
@@ -209,30 +202,31 @@
     {{-- ============================================================ End Sidebar --}}
 
     @auth
-    {{-- Mobile profile drawer --}}
-    <div id="mobile-profile-backdrop" onclick="window.toggleMobileProfile&&window.toggleMobileProfile();"></div>
-    <div id="mobile-profile-menu">
-        <div class="mpm-header">
-            <div class="mpm-info">
-                <h6 class="mb-1 fw-bold text-truncate">{{ auth()->user()->name }}</h6>
-                <p class="small mb-2 text-truncate">{{ auth()->user()->email }}</p>
+    {{-- Right drawer (perfil) - fuera del wrapper para evitar problemas de z-index --}}
+    <div id="right-drawer-backdrop" style="display:none;"></div>
+    <div id="right-drawer" style="transform:translateX(100%);transition:transform .3s ease;">
+        <div class="rd-header">
+            <div class="rd-avatar">
+                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </div>
+            <div class="rd-info">
+                <h6>{{ auth()->user()->name }}</h6>
+                <p>{{ auth()->user()->email }}</p>
                 @if(auth()->user()->turno)
-                    <span class="badge bg-info">Turno {{ auth()->user()->turno }}</span>
+                    <span class="badge bg-info mt-1" style="font-size:.7rem;">Turno {{ auth()->user()->turno }}</span>
                 @endif
             </div>
-            <button type="button" class="mpm-close" onclick="window.toggleMobileProfile&&window.toggleMobileProfile();" aria-label="Cerrar">
-                <i class="fas fa-times"></i>
-            </button>
+            <button type="button" class="rd-close" id="rd-close-btn"><i class="fas fa-times"></i></button>
         </div>
-        <a href="{{ route('profile.edit') }}" class="mpm-item">
-            <i class="fas fa-user me-2"></i>Mi perfil
-        </a>
-        <form method="POST" action="{{ route('logout') }}" class="mb-0">
-            @csrf
-            <button type="submit" class="mpm-item text-danger" style="width:100%;">
-                <i class="fas fa-sign-out-alt me-2"></i>Cerrar sesión
-            </button>
-        </form>
+        <ul class="rd-nav">
+            <li><a href="{{ route('profile.edit') }}"><i class="fas fa-user"></i>Mi perfil</a></li>
+            <li>
+                <form method="POST" action="{{ route('logout') }}" class="mb-0">
+                    @csrf
+                    <button type="submit"><i class="fas fa-sign-out-alt" style="color:#e74c3c;"></i><span style="color:#e74c3c;">Cerrar sesión</span></button>
+                </form>
+            </li>
+        </ul>
     </div>
     @endauth
 
@@ -247,10 +241,7 @@
                         <button class="btn btn-toggle toggle-sidebar"><i class="gg-menu-right"></i></button>
                         <button class="btn btn-toggle sidenav-toggler"><i class="gg-menu-left"></i></button>
                     </div>
-                    <button class="topbar-toggler more" type="button"
-                            onclick="event.preventDefault();event.stopImmediatePropagation();window.toggleMobileProfile&&window.toggleMobileProfile();return false;">
-                        <i class="gg-more-vertical-alt"></i>
-                    </button>
+                    <button class="topbar-toggler more"><i class="gg-more-vertical-alt"></i></button>
                 </div>
             </div>
 
@@ -406,16 +397,35 @@
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
 
-    // Toggle menú de perfil móvil (drawer derecho)
-    window.toggleMobileProfile = function() {
-        var menu = document.getElementById('mobile-profile-menu');
-        var bd   = document.getElementById('mobile-profile-backdrop');
-        if (!menu || !bd) return;
-        var willOpen = !menu.classList.contains('mpm-open');
-        menu.classList.toggle('mpm-open', willOpen);
-        bd.classList.toggle('mpm-open', willOpen);
-        document.body.style.overflow = willOpen ? 'hidden' : '';
-    };
+    // Drawer derecho (perfil) — se engancha DESPUÉS de que kaiadmin.js clona los botones
+    var rdDrawer   = document.getElementById('right-drawer');
+    var rdBackdrop = document.getElementById('right-drawer-backdrop');
+    var rdOpen     = false;
+
+    function openRightDrawer()  {
+        if (!rdDrawer || !rdBackdrop) return;
+        rdDrawer.style.setProperty('transform', 'translateX(0)', 'important');
+        rdBackdrop.style.display = 'block';
+        rdOpen = true;
+    }
+    function closeRightDrawer() {
+        if (!rdDrawer || !rdBackdrop) return;
+        rdDrawer.style.setProperty('transform', 'translateX(100%)', 'important');
+        rdBackdrop.style.display = 'none';
+        rdOpen = false;
+    }
+    function toggleRightDrawer(ev) {
+        if (ev) { ev.preventDefault(); ev.stopImmediatePropagation(); }
+        if (rdOpen) closeRightDrawer(); else openRightDrawer();
+    }
+
+    // Enganchar a TODOS los .topbar-toggler (incluyendo los clonados por kaiadmin.js)
+    document.querySelectorAll('.topbar-toggler').forEach(function(b){
+        b.addEventListener('click', toggleRightDrawer);
+    });
+    if (rdBackdrop) rdBackdrop.addEventListener('click', closeRightDrawer);
+    var rdCloseBtn = document.getElementById('rd-close-btn');
+    if (rdCloseBtn) rdCloseBtn.addEventListener('click', closeRightDrawer);
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
     document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
