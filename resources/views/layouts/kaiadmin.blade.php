@@ -151,10 +151,7 @@
 
             <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
                 <div class="container-fluid">
-                    <div class="d-flex align-items-center gap-2">
-                        <button class="btn-mobile-sidebar" id="btn-open-sidebar" aria-label="Menú">
-                            <i class="fas fa-bars"></i>
-                        </button>
+                    <div class="d-flex align-items-center">
                         <h5 class="mb-0 text-muted d-none d-md-block">@yield('page-title', config('app.name'))</h5>
                     </div>
                     <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
@@ -273,7 +270,6 @@
 @stack('scripts')
 <script>
 (function(){
-    var btn     = document.getElementById('btn-open-sidebar');
     var overlay = document.getElementById('sidebar-overlay');
     var sidebar = document.querySelector('.sidebar');
     var isOpen  = false;
@@ -288,16 +284,22 @@
     }
     function closeSidebar() {
         if (!sidebar) return;
-        sidebar.style.setProperty('transform',         'translate3d(-270px,0,0)', 'important');
-        sidebar.style.setProperty('-webkit-transform', 'translate3d(-270px,0,0)', 'important');
+        sidebar.style.removeProperty('transform');
+        sidebar.style.removeProperty('-webkit-transform');
         sidebar.style.removeProperty('z-index');
         if (overlay) overlay.style.display = 'none';
         isOpen = false;
     }
-
-    if (btn) btn.addEventListener('click', function(){
+    function toggleSidebar(ev) {
+        if (window.innerWidth >= 992) return;  // solo móvil
+        if (ev) { ev.preventDefault(); ev.stopPropagation(); }
         if (isOpen) closeSidebar(); else openSidebar();
-    });
+    }
+
+    // Hookear a TODOS los botones hamburguesa de Kaiadmin
+    document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
+        .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
+
     if (overlay) overlay.addEventListener('click', closeSidebar);
     document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
         a.addEventListener('click', function(){ if (window.innerWidth < 992) closeSidebar(); });
