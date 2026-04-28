@@ -44,12 +44,16 @@
         }
         @media (max-width: 991.98px) {
             .btn-mobile-sidebar { display: inline-flex !important; }
-            /* Topbar (3-dot) reveal en móvil */
-            html.topbar_open .navbar-header { display: block !important; background:#fff; }
-            html.topbar_open .navbar-header .container-fluid { flex-wrap: wrap; padding: 10px 15px; }
-            html.topbar_open .topbar-nav { display: flex !important; width: 100%; justify-content: flex-end; }
-            html:not(.topbar_open) .navbar-header .topbar-nav { display: none; }
-            .navbar-header { transition: all .25s ease; }
+            /* Posicionar el dropdown del perfil cerca del botón 3-puntos en móvil */
+            .topbar-user .dropdown-menu {
+                position: fixed !important;
+                top: 60px !important;
+                right: 10px !important;
+                left: auto !important;
+                transform: none !important;
+                min-width: 240px;
+                z-index: 1060;
+            }
         }
     </style>
 </head>
@@ -306,14 +310,16 @@
     document.querySelectorAll('.sidenav-toggler, .toggle-sidebar, #btn-open-sidebar')
         .forEach(function(b){ b.addEventListener('click', toggleSidebar); });
 
-    // Botón 3 puntos (.topbar-toggler) en móvil
-    function toggleTopbar(ev){
-        if (window.innerWidth >= 992) return;
+    // Botón 3 puntos: abre el dropdown de perfil directamente
+    function toggleProfileDropdown(ev){
         if (ev) { ev.preventDefault(); ev.stopPropagation(); }
-        document.documentElement.classList.toggle('topbar_open');
+        var trigger = document.querySelector('.topbar-user .dropdown-toggle');
+        if (!trigger || !window.bootstrap) return;
+        var dd = bootstrap.Dropdown.getOrCreateInstance(trigger);
+        dd.toggle();
     }
     document.querySelectorAll('.topbar-toggler').forEach(function(b){
-        b.addEventListener('click', toggleTopbar);
+        b.addEventListener('click', toggleProfileDropdown);
     });
 
     if (overlay) overlay.addEventListener('click', closeSidebar);
