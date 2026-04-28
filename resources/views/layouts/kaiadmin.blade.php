@@ -28,13 +28,8 @@
             background: rgba(0,0,0,.5);
             z-index: 1040;
         }
-        body.sidebar-mobile-open #sidebar-overlay { display: block; }
+        html.nav_open #sidebar-overlay { display: block; }
         @media (max-width: 991.98px) {
-            body.sidebar-mobile-open .sidebar {
-                transform: translateX(0) !important;
-                left: 0 !important;
-                z-index: 1045;
-            }
             .btn-mobile-sidebar {
                 display: inline-flex !important;
                 align-items: center;
@@ -282,11 +277,10 @@
 (function(){
     var btn     = document.getElementById('btn-open-sidebar');
     var overlay = document.getElementById('sidebar-overlay');
-    function openSidebar()  { document.body.classList.add('sidebar-mobile-open'); }
-    function closeSidebar() { document.body.classList.remove('sidebar-mobile-open'); }
+    function openSidebar()  { document.documentElement.classList.add('nav_open'); }
+    function closeSidebar() { document.documentElement.classList.remove('nav_open'); }
     if (btn)     btn.addEventListener('click', openSidebar);
     if (overlay) overlay.addEventListener('click', closeSidebar);
-    // close on nav-item click (useful for mobile)
     document.querySelectorAll('.sidebar .nav-item a').forEach(function(a){
         a.addEventListener('click', closeSidebar);
     });
