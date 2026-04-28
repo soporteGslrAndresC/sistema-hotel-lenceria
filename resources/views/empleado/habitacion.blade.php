@@ -70,13 +70,27 @@
                     <button @click="toggleScanner()"
                             :disabled="completada"
                             class="btn w-100 mb-3"
-                            :class="scanning ? 'btn-danger' : 'btn-primary'">
+                            :class="scanning ? 'btn-danger' : 'btn-primary'"
+                            x-show="!cameraError">
                         <i :class="scanning ? 'fas fa-stop-circle' : 'fas fa-camera'" class="me-2"></i>
                         <span x-show="!scanning">Activar cámara QR</span>
                         <span x-show="scanning">Detener cámara</span>
                     </button>
 
                     <div id="qr-reader" x-show="scanning" class="mb-3"></div>
+
+                    <template x-if="cameraError">
+                        <div class="alert alert-warning mb-2">
+                            <small><i class="fas fa-exclamation-triangle me-1"></i>Cámara no disponible</small>
+                        </div>
+                    </template>
+
+                    <div x-show="cameraError" class="mb-3">
+                        <label class="btn btn-success w-100" for="file-input-hab">
+                            <i class="fas fa-image me-2"></i>Seleccionar imagen con QR
+                        </label>
+                        <input type="file" id="file-input-hab" accept="image/*" @change="onFileSelected($event)" style="display:none;">
+                    </div>
 
                     <hr>
                     <p class="text-muted small mb-2"><i class="fas fa-keyboard me-1"></i>Ingreso manual</p>
@@ -200,6 +214,7 @@ function checklist() {
         manualCode:    '',
         msg:           '',
         msgClass:      '',
+        cameraError:   '',
         completada:    {{ in_array($asignacion->estado, ['completa','incompleta']) ? 'true' : 'false' }},
         checkItems:    @json($checkItemsData),
         conteoTipo:    @json(collect($conteos)->map(fn($c) => ['hechos' => $c['hechos'], 'total' => $c['total']])),
@@ -232,8 +247,10 @@ function checklist() {
                 (err) => {}
             ).then(() => {
                 this.scanning = true;
+                this.cameraError = '';
             }).catch(err => {
-                this.flash('No se pudo acceder a la cámara: ' + err, 'alert-danger');
+                this.cameraError = err.toString();
+                this.scanning = false;
             });
         },
 
@@ -283,6 +300,22 @@ function checklist() {
             this.msg      = mensaje;
             this.msgClass = clase;
             setTimeout(() => { this.msg = ''; }, 4000);
+        },
+
+        onFileSelected(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            this.html5QrCode = this.html5QrCode || new Html5Qrcode('qr-reader');
+            this.html5QrCode.scanFile(file, true)
+                .then(decodedText => {
+                    this.enviarCodigo(decodedText);
+                    event.target.value = '';
+                })
+                .catch(err => {
+                    this.flash('No se detectó código QR en la imagen', 'alert-warning');
+                    event.target.value = '';
+                });
         },
     };
 }
